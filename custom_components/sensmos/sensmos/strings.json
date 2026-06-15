@@ -42,10 +42,10 @@
       },
       "feed_own": {
         "title": "Feed a custom entity",
-        "description": "Any HA sensor can be stored on the node as own.<name> and used in node scripts.",
+        "description": "Any HA sensor or binary sensor can be stored on the node as an own.* entity for use in node scripts. The unit is taken from the HA entity automatically; binary sensors (e.g. motion) become 1/0.",
         "data": {
-          "name": "Name on the node (will become own.<name>)",
-          "ha_entity": "Home Assistant sensor"
+          "name": "Name on the node (e.g. boiler → own.boiler)",
+          "ha_entity": "Home Assistant sensor or binary sensor"
         }
       },
       "feed_remove": {
@@ -57,7 +57,7 @@
         "description": "Your node will receive the other node's data (billed daily in GALU). You'll see what's available before confirming.",
         "data": {
           "esp_id": "Target node device ID",
-          "prefix": "Local prefix (data appears as <prefix>.*)",
+          "prefix": "Local prefix (e.g. sub → sub.*)",
           "days": "Days"
         }
       },

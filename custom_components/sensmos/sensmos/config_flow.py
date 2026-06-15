@@ -171,7 +171,7 @@ class SensmosOptionsFlow(OptionsFlow):
         ent_filter = (
             selector.EntityFilterSelectorConfig(domain="sensor", device_class=dev_classes)
             if dev_classes
-            else selector.EntityFilterSelectorConfig(domain="sensor")
+            else selector.EntityFilterSelectorConfig(domain=["sensor", "binary_sensor"])
         )
         return self.async_show_form(
             step_id="feed_pub_entity",
@@ -218,7 +218,9 @@ class SensmosOptionsFlow(OptionsFlow):
                     vol.Required("name"): selector.TextSelector(),
                     vol.Required("ha_entity"): selector.EntitySelector(
                         selector.EntitySelectorConfig(
-                            filter=selector.EntityFilterSelectorConfig(domain="sensor")
+                            filter=selector.EntityFilterSelectorConfig(
+                                domain=["sensor", "binary_sensor"]
+                            )
                         )
                     ),
                 }
