@@ -1,0 +1,13 @@
+{
+  "domain": "sensmos",
+  "name": "Sensmos",
+  "version": "0.1.0",
+  "documentation": "https://sensmos.com",
+  "issue_tracker": "https://sensmos.com",
+  "codeowners": ["@sensmos"],
+  "config_flow": true,
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "requirements": [],
+  "dependencies": ["webhook"]
+}

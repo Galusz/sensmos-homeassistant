@@ -1,0 +1,89 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Dodaj node Sensmos",
+        "description": "Podaj adres noda i PIN. Adres znajdziesz w aplikacji Sensmos (np. 192.168.68.71 albo sensmos-ab12cd.local).",
+        "data": {
+          "host": "Adres noda (IP lub hostname)",
+          "pin": "PIN noda"
+        }
+      }
+    },
+    "error": {
+      "invalid_pin": "Błędny PIN.",
+      "cannot_connect": "Brak połączenia z nodem. Sprawdź adres i czy node jest online."
+    },
+    "abort": {
+      "already_configured": "Ten node jest już skonfigurowany."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Node Sensmos",
+        "menu_options": {
+          "feed_pub": "➕ Karm encję natywną (pub.*) z HA",
+          "feed_own": "➕ Karm własną encję (own.*) z HA",
+          "feed_remove": "➖ Usuń mapowanie",
+          "subscribe": "📡 Subskrybuj inny node",
+          "settings": "⚙️ Ustawienia (zdarzenia noda)"
+        }
+      },
+      "feed_pub": {
+        "title": "Wybierz encję natywną noda",
+        "description": "To encje nagradzane przez sieć. Wybierz jedną — w następnym kroku wskażesz pasujący sensor z Home Assistant.",
+        "data": { "node_entity": "Encja natywna (jednostka)" }
+      },
+      "feed_pub_entity": {
+        "title": "Wybierz sensor Home Assistant",
+        "description": "Karmisz **{node_entity}** (jednostka: {unit}). Lista jest zawężona do zgodnych sensorów; jednostki są przeliczane automatycznie (np. kW → W).",
+        "data": { "ha_entity": "Sensor Home Assistant" }
+      },
+      "feed_own": {
+        "title": "Karm własną encję",
+        "description": "Dowolny sensor HA może trafiać na node jako own.<nazwa> i być używany w skryptach noda.",
+        "data": {
+          "name": "Nazwa na nodzie (powstanie own.<nazwa>)",
+          "ha_entity": "Sensor Home Assistant"
+        }
+      },
+      "feed_remove": {
+        "title": "Usuń mapowania",
+        "data": { "remove": "Mapowania do usunięcia" }
+      },
+      "subscribe": {
+        "title": "Subskrybuj inny node",
+        "description": "Twój node będzie odbierał dane innego noda (rozliczane dziennie w GALU). Przed potwierdzeniem zobaczysz, co jest dostępne.",
+        "data": {
+          "esp_id": "Device ID noda docelowego",
+          "prefix": "Lokalny prefix (dane pojawią się jako <prefix>.*)",
+          "days": "Dni"
+        }
+      },
+      "subscribe_confirm": {
+        "title": "Potwierdź subskrypcję",
+        "description": "Node **{esp_id}** udostępnia {count} encji:\n\n{listing}\n\nDane pojawią się w HA jako sensory **{prefix}.*** w ciągu minuty. Czas: {days} dni, rozliczenie dzienne w GALU."
+      },
+      "settings": {
+        "title": "Ustawienia",
+        "data": {
+          "webhook_enabled": "Zdarzenia noda w HA (sensmos_event / sensmos_message)"
+        }
+      }
+    },
+    "error": {
+      "invalid_name": "Nieprawidłowa nazwa — użyj liter, cyfr, podkreślnika.",
+      "already_mapped": "Ta encja jest już zmapowana.",
+      "target_unavailable": "Nie udało się pobrać katalogu noda docelowego."
+    },
+    "abort": {
+      "cannot_connect": "Brak połączenia z nodem.",
+      "no_native_left": "Wszystkie encje natywne są już zmapowane.",
+      "no_feeds": "Brak mapowań.",
+      "subscribe_ok": "✅ Zasubskrybowano! Nowe sensory pojawią się za chwilę.",
+      "subscribe_failed": "Subskrypcja nie powiodła się.",
+      "insufficient_balance": "Za mało GALU na pierwszą dobę subskrypcji."
+    }
+  }
+}

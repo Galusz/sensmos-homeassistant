@@ -1,0 +1,30 @@
+push:
+  name: Wyślij encję na node
+  description: Zapisuje wartość jako encję na nodzie Sensmos (own.* / pub.* natywna).
+  fields:
+    device_id:
+      name: Node
+      description: Urządzenie Sensmos (puste = jedyny skonfigurowany node).
+      required: false
+      selector:
+        device:
+          integration: sensmos
+    entity_id:
+      name: Encja na nodzie
+      description: "Np. own.temp_salon albo natywna pub.grid_v"
+      required: true
+      example: own.temp_salon
+      selector:
+        text:
+    value:
+      name: Wartość
+      required: true
+      example: "23.5"
+      selector:
+        text:
+    unit:
+      name: Jednostka
+      required: false
+      example: "°C"
+      selector:
+        text:
