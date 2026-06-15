@@ -24,6 +24,10 @@ from .units import convert
 
 _LOGGER = logging.getLogger(__name__)
 
+# Stany binarne (binary_sensor: motion, door, …) → 1/0 (numeryczne na nodzie).
+_BOOL_TRUE = {"on", "true", "open", "home", "detected", "yes", "active", "1"}
+_BOOL_FALSE = {"off", "false", "closed", "away", "clear", "no", "inactive", "0"}
+
 
 def _fmt(value: float) -> str:
     """Float → string dla FW (które czyta value jako tekst)."""
@@ -104,8 +108,14 @@ class Feeder:
         try:
             value = float(state.state)
         except (ValueError, TypeError):
-            # stan nienumeryczny — wyślij surowy tekst
-            await self._send(node_entity, state.state[:60], ha_unit or "")
+            # nienumeryczny: binary (on/off…) → 1/0, reszta → surowy tekst
+            s = state.state.strip().lower()
+            if s in _BOOL_TRUE:
+                await self._send(node_entity, "1", "")
+            elif s in _BOOL_FALSE:
+                await self._send(node_entity, "0", "")
+            else:
+                await self._send(node_entity, state.state[:60], ha_unit or "")
             return
 
         unit_out = target_unit or ha_unit or ""

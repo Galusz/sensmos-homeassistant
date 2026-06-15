@@ -62,6 +62,14 @@ class SensmosCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return self.data["status"].get("pool", []) or []
 
     @property
+    def node_entities(self) -> list[dict[str, Any]]:
+        """Własne encje noda: pub.* (natywne) + own.* (niestandardowe)."""
+        if not self.data:
+            return []
+        status = self.data.get("status") or {}
+        return (status.get("pub") or []) + (status.get("own") or [])
+
+    @property
     def native_entities(self) -> list[dict[str, Any]]:
         if not self.data:
             return []

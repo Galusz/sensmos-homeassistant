@@ -42,10 +42,10 @@
       },
       "feed_own": {
         "title": "Karm własną encję",
-        "description": "Dowolny sensor HA może trafiać na node jako own.<nazwa> i być używany w skryptach noda.",
+        "description": "Dowolny sensor lub binary_sensor z HA może trafiać na node jako encja own.* do użycia w skryptach noda. Jednostka jest brana z encji HA automatycznie; sensory binarne (np. ruch) stają się 1/0.",
         "data": {
-          "name": "Nazwa na nodzie (powstanie own.<nazwa>)",
-          "ha_entity": "Sensor Home Assistant"
+          "name": "Nazwa na nodzie (np. boiler → own.boiler)",
+          "ha_entity": "Sensor lub binary_sensor z Home Assistant"
         }
       },
       "feed_remove": {
@@ -57,7 +57,7 @@
         "description": "Twój node będzie odbierał dane innego noda (rozliczane dziennie w GALU). Przed potwierdzeniem zobaczysz, co jest dostępne.",
         "data": {
           "esp_id": "Device ID noda docelowego",
-          "prefix": "Lokalny prefix (dane pojawią się jako <prefix>.*)",
+          "prefix": "Lokalny prefix (np. sub → sub.*)",
           "days": "Dni"
         }
       },

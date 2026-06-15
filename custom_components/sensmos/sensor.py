@@ -14,7 +14,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, POOL_EXCLUDED_PREFIXES
+from .const import DOMAIN, OPT_FEEDS, POOL_EXCLUDED_PREFIXES
 from .coordinator import SensmosCoordinator
 
 
@@ -33,24 +33,32 @@ async def async_setup_entry(
     ]
 
     known: set[str] = set()
+    # encje noda karmione z HA pomijamy — inaczej pętla HA→node→HA
+    fed = {f["node_entity"] for f in entry.options.get(OPT_FEEDS, [])}
 
     @callback
-    def _discover_pool() -> None:
+    def _discover() -> None:
         new: list[SensorEntity] = []
+        # dane z subskrypcji (pool → sub.*/prefix usera)
         for ent in coordinator.pool_entities:
             eid = ent.get("entity_id", "")
-            if not eid or eid in known:
-                continue
-            if eid.startswith(POOL_EXCLUDED_PREFIXES):
+            if not eid or eid in known or eid.startswith(POOL_EXCLUDED_PREFIXES):
                 continue
             known.add(eid)
             new.append(PoolSensor(coordinator, device_info, eid))
+        # własne encje noda (pub.* natywne + own.* niestandardowe)
+        for ent in coordinator.node_entities:
+            eid = ent.get("entity_id", "")
+            if not eid or eid in known or eid in fed:
+                continue
+            known.add(eid)
+            new.append(NodeEntitySensor(coordinator, device_info, eid))
         if new:
             async_add_entities(new)
 
     async_add_entities(entities)
-    _discover_pool()
-    entry.async_on_unload(coordinator.async_add_listener(_discover_pool))
+    _discover()
+    entry.async_on_unload(coordinator.async_add_listener(_discover))
 
 
 class _Base(CoordinatorEntity[SensmosCoordinator], SensorEntity):
@@ -63,20 +71,25 @@ class _Base(CoordinatorEntity[SensmosCoordinator], SensorEntity):
         self._attr_device_info = device_info
 
 
-class PoolSensor(_Base):
-    """Encja z subskrypcji (sub.* / prefix usera) widoczna w HA."""
+class _DynSensor(_Base):
+    """Encja dynamiczna noda — wartość/jednostka czytane na żywo z bufora."""
+
+    _uid_kind = "dyn"
 
     def __init__(
         self, coordinator: SensmosCoordinator, device_info: DeviceInfo, entity_id: str
     ) -> None:
         super().__init__(coordinator, device_info)
         self._eid = entity_id
-        self._attr_unique_id = f"{coordinator.device_id}_pool_{entity_id}"
+        self._attr_unique_id = f"{coordinator.device_id}_{self._uid_kind}_{entity_id}"
         self._attr_name = entity_id
         self._attr_state_class = SensorStateClass.MEASUREMENT
 
+    def _source(self) -> list[dict[str, Any]]:
+        raise NotImplementedError
+
     def _find(self) -> dict[str, Any] | None:
-        for ent in self.coordinator.pool_entities:
+        for ent in self._source():
             if ent.get("entity_id") == self._eid:
                 return ent
         return None
@@ -107,6 +120,24 @@ class PoolSensor(_Base):
     def extra_state_attributes(self) -> dict[str, Any]:
         ent = self._find() or {}
         return {"age_s": ent.get("age_s")}
+
+
+class PoolSensor(_DynSensor):
+    """Encja z subskrypcji (sub.* / prefix usera) widoczna w HA."""
+
+    _uid_kind = "pool"
+
+    def _source(self) -> list[dict[str, Any]]:
+        return self.coordinator.pool_entities
+
+
+class NodeEntitySensor(_DynSensor):
+    """Własna encja noda: pub.* (natywna) lub own.* (niestandardowa)."""
+
+    _uid_kind = "node"
+
+    def _source(self) -> list[dict[str, Any]]:
+        return self.coordinator.node_entities
 
 
 class GaluSensor(_Base):
