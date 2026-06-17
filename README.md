@@ -1,4 +1,4 @@
-<img src="logo.png" alt="Sensmos" height="96">
+<img src="logo.png" alt="Sensmos" height="80">
 
 # Sensmos — Home Assistant integration (HACS)
 
@@ -66,6 +66,13 @@ data:
 - A Sensmos node on the same network (firmware with the HTTP API).
 - Home Assistant 2024.6+.
 
-## Links
+## Part of the Sensmos project
 
-- Website: https://sensmos.com
+| | |
+|---|---|
+| 🌐 Website | https://sensmos.com |
+| 📱 App | https://github.com/Galusz/sensmos-app |
+| 🔌 Firmware | https://github.com/Galusz/sensmos-firmware |
+| 💬 Discord | https://discord.com/channels/1516178525814526044/1516181082750451772 |
+
+GALU runs on Polygon. © 2026 Sensmos.
