@@ -73,6 +73,6 @@ data:
 | 🌐 Website | https://sensmos.com |
 | 📱 App | https://github.com/Galusz/sensmos-app |
 | 🔌 Firmware | https://github.com/Galusz/sensmos-firmware |
-| 💬 Discord | https://discord.com/channels/1516178525814526044/1516181082750451772 |
+| 💬 Discord | https://discord.gg/ukea386Kqx |
 
 GALU runs on Polygon. © 2026 Sensmos.
