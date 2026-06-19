@@ -1,4 +1,4 @@
-"""Sensmos — sensory: dane subskrypcji (sub.*) + statusy noda (GALU, uptime)."""
+"""Sensmos — sensory: dane subskrypcji (sub.*) + statusy noda (uptime)."""
 from __future__ import annotations
 
 from typing import Any
@@ -27,8 +27,6 @@ async def async_setup_entry(
 
     # statusy noda
     entities: list[SensorEntity] = [
-        GaluSensor(coordinator, device_info, "available", "GALU dostępne", "mdi:hand-coin"),
-        GaluSensor(coordinator, device_info, "pending_galu", "GALU do odebrania", "mdi:download"),
         UptimeSensor(coordinator, device_info),
     ]
 
@@ -138,37 +136,6 @@ class NodeEntitySensor(_DynSensor):
 
     def _source(self) -> list[dict[str, Any]]:
         return self.coordinator.node_entities
-
-
-class GaluSensor(_Base):
-    """Saldo GALU z portfela właściciela noda."""
-
-    _attr_native_unit_of_measurement = "GALU"
-    _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_suggested_display_precision = 3
-
-    def __init__(
-        self,
-        coordinator: SensmosCoordinator,
-        device_info: DeviceInfo,
-        field: str,
-        name: str,
-        icon: str,
-    ) -> None:
-        super().__init__(coordinator, device_info)
-        self._field = field
-        self._attr_unique_id = f"{coordinator.device_id}_{field}"
-        self._attr_name = name
-        self._attr_icon = icon
-
-    @property
-    def native_value(self) -> float | None:
-        wallet = (self.coordinator.data or {}).get("wallet") or {}
-        val = wallet.get(self._field)
-        try:
-            return round(float(val), 4)
-        except (TypeError, ValueError):
-            return None
 
 
 class UptimeSensor(_Base):

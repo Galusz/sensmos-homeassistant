@@ -71,9 +71,6 @@ class SensmosApi:
     async def data_native(self) -> dict[str, Any]:
         return await self._request("GET", "/data/native")
 
-    async def wallet_balance(self) -> dict[str, Any]:
-        return await self._request("GET", "/wallet/balance", timeout=10)
-
     async def remote_available(self, esp_id: str) -> dict[str, Any]:
         return await self._request(
             "GET", f"/remote/available?esp_id={esp_id}", timeout=12

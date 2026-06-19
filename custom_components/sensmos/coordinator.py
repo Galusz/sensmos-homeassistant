@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class SensmosCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """Status co 30 s; config/wallet/native co N cykli."""
+    """Status co 30 s; config/native co N cykli."""
 
     def __init__(
         self, hass: HomeAssistant, api: SensmosApi, device_id: str
@@ -29,7 +29,7 @@ class SensmosCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.api = api
         self.device_id = device_id
         self._cycle = 0
-        self._slow: dict[str, Any] = {"config": {}, "wallet": {}, "native": []}
+        self._slow: dict[str, Any] = {"config": {}, "native": []}
 
     async def _async_update_data(self) -> dict[str, Any]:
         try:
@@ -38,14 +38,10 @@ class SensmosCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise UpdateFailed(str(err)) from err
 
         if self._cycle % SLOW_EVERY_N_CYCLES == 0:
-            for key, call in (
-                ("config", self.api.config),
-                ("wallet", self.api.wallet_balance),
-            ):
-                try:
-                    self._slow[key] = await call()
-                except SensmosApiError as err:
-                    _LOGGER.debug("Slow fetch %s failed: %s", key, err)
+            try:
+                self._slow["config"] = await self.api.config()
+            except SensmosApiError as err:
+                _LOGGER.debug("Slow fetch config failed: %s", err)
             try:
                 native = await self.api.data_native()
                 self._slow["native"] = native.get("entities", [])

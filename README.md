@@ -12,7 +12,7 @@ Connect a Sensmos ESP32 node to Home Assistant — **locally, no cloud, no broke
 - **Feed the node from HA** — map any HA sensor → a node entity (native `pub.*` or custom `own.*`). Units are converted automatically (kW→W, mV→V, °F→°C…). Binary sensors (motion, door…) are sent as `1`/`0`. No automations to write — the integration tracks state changes and refreshes every 5 min.
 - **Subscription sensors** — data your node subscribes to from other nodes (`sub.*` / your prefix) appears as HA sensors as soon as it arrives.
 - **Subscribe from HA** — pick a target node's device ID, preview its entities, confirm; sensors appear on their own.
-- **Node status** — GALU available / claimable, uptime, online, backend (WS) connectivity.
+- **Node status** — uptime, online, backend (WS) connectivity.
 - **Node events as HA events** — `sensmos_event` (batch_sent, sub_received, ws_connected) and `sensmos_message` (incoming message) for automations. The webhook is configured on the node automatically.
 
 ## Installation

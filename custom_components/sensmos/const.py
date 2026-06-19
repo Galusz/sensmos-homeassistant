@@ -11,7 +11,7 @@ OPT_WEBHOOK = "webhook_enabled"  # bool
 
 # coordinator
 SCAN_INTERVAL_S = 30        # /data/status
-SLOW_EVERY_N_CYCLES = 10    # /config, /wallet/balance, /data/native co N cykli
+SLOW_EVERY_N_CYCLES = 10    # /config, /data/native co N cykli
 
 # feeder
 FEED_MIN_INTERVAL_S = 15    # min odstęp push per mapowanie
