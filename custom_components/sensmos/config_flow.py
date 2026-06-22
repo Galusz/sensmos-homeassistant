@@ -145,18 +145,8 @@ class SensmosConfigFlow(ConfigFlow, domain=DOMAIN):
                         )
                     ),
                     vol.Optional(CONF_LABEL): selector.TextSelector(),
-                    vol.Optional(CONF_LAT): selector.NumberSelector(
-                        selector.NumberSelectorConfig(
-                            min=-90, max=90, step=0.0001,
-                            mode=selector.NumberSelectorMode.BOX,
-                        )
-                    ),
-                    vol.Optional(CONF_LON): selector.NumberSelector(
-                        selector.NumberSelectorConfig(
-                            min=-180, max=180, step=0.0001,
-                            mode=selector.NumberSelectorMode.BOX,
-                        )
-                    ),
+                    vol.Optional(CONF_LAT): vol.Coerce(float),
+                    vol.Optional(CONF_LON): vol.Coerce(float),
                 }
             ),
             errors=errors,
@@ -400,20 +390,10 @@ class SensmosOptionsFlow(OptionsFlow):
                     ): selector.TextSelector(),
                     vol.Optional(
                         CONF_LAT, description={"suggested_value": o.get(CONF_LAT)}
-                    ): selector.NumberSelector(
-                        selector.NumberSelectorConfig(
-                            min=-90, max=90, step=0.0001,
-                            mode=selector.NumberSelectorMode.BOX,
-                        )
-                    ),
+                    ): vol.Coerce(float),
                     vol.Optional(
                         CONF_LON, description={"suggested_value": o.get(CONF_LON)}
-                    ): selector.NumberSelector(
-                        selector.NumberSelectorConfig(
-                            min=-180, max=180, step=0.0001,
-                            mode=selector.NumberSelectorMode.BOX,
-                        )
-                    ),
+                    ): vol.Coerce(float),
                 }
             ),
         )
