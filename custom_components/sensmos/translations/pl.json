@@ -49,7 +49,9 @@
           "settings": "⚙️ Ustawienia (zdarzenia noda)",
           "data_add": "➕ Publikuj encję Home Assistant",
           "data_remove": "➖ Usuń publikowaną encję",
-          "data_settings": "⚙️ Ustawienia (interwał, lokalizacja, etykieta)"
+          "get_add": "👁️ Podgląd danych innego noda (czytaj do HA)",
+          "get_remove": "➖ Przestań podglądać node",
+          "data_settings": "⚙️ Ustawienia (interwały, lokalizacja, etykieta)"
         }
       },
       "feed_pub": {
@@ -105,11 +107,24 @@
         "title": "Usuń publikowane encje",
         "data": { "remove": "Encje do przestania publikowania" }
       },
+      "get_add": {
+        "title": "Podgląd innego noda",
+        "description": "Czytaj opublikowane dane noda do HA jako sensory (dowolny node — realny lub programowy). To podgląd, nie realtime — odpytuje rzadko (domyślnie co 10 min). Pełne device ID jest na mapie (popup noda → kopiuj).",
+        "data": {
+          "device_id": "Device ID noda (64 znaki hex)",
+          "prefix": "Lokalny prefiks (np. sasiad → sasiad.*)"
+        }
+      },
+      "get_remove": {
+        "title": "Przestań podglądać",
+        "data": { "remove": "Nody do przestania podglądania" }
+      },
       "data_settings": {
         "title": "Ustawienia danych",
         "description": "Lokalizacja jest opcjonalna — bez niej serwer użyje GeoIP z Twojego IP.",
         "data": {
           "push_interval": "Interwał wysyłki (sekundy, min 20)",
+          "get_interval": "Interwał podglądu (sekundy, min 120)",
           "label": "Etykieta na mapie",
           "lat": "Szerokość",
           "lon": "Długość"
@@ -120,12 +135,14 @@
       "invalid_name": "Błędna nazwa — użyj liter, cyfr, podkreślnika.",
       "already_mapped": "Ta encja jest już zmapowana.",
       "target_unavailable": "Nie udało się pobrać katalogu noda docelowego.",
-      "invalid_entity": "Użyj pub.<nazwa> lub own.<nazwa> (małe litery, np. pub.batt_soc)."
+      "invalid_entity": "Użyj pub.<nazwa> lub own.<nazwa> (małe litery, np. pub.batt_soc).",
+      "invalid_device_id": "Device ID to 64 znaki hex. Skopiuj z popupu noda na mapie."
     },
     "abort": {
       "cannot_connect": "Nie można połączyć z nodem.",
       "no_native_left": "Wszystkie encje natywne są już zmapowane.",
       "no_feeds": "Nic jeszcze nie zmapowano.",
+      "no_gets": "Żaden node nie jest jeszcze podglądany.",
       "subscribe_ok": "✅ Zasubskrybowano! Nowe sensory pojawią się wkrótce.",
       "subscribe_failed": "Subskrypcja nieudana.",
       "insufficient_balance": "Za mało GALU na pierwszą dobę subskrypcji."

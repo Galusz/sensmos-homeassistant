@@ -19,6 +19,7 @@ from .const import (
     CONF_KEY,
     CONF_MODE,
     CONF_PIN,
+    DATA_PLATFORMS,
     DOMAIN,
     MODE_DATA,
     OPT_FEEDS,
@@ -28,6 +29,7 @@ from .const import (
 from .coordinator import SensmosCoordinator
 from .direct import SensmosDirect
 from .feeder import Feeder
+from .get import SensmosGet
 from .webhook import async_remove_node_webhook, async_setup_node_webhook
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,11 +51,18 @@ async def _async_setup_data_entry(hass: HomeAssistant, entry: ConfigEntry) -> bo
     device_id = hashlib.sha256(
         ("sensmos-soft:" + entry.data[CONF_KEY]).encode()
     ).hexdigest()
+
+    # podgląd (GET) encji innych nodów jako sensory HA — długi interwał, nie blokuje setupu
+    get = SensmosGet(hass, entry)
+    await get.async_refresh()
+
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         "direct": direct,
+        "get": get,
         "device_id": device_id,
         "mode": MODE_DATA,
     }
+    await hass.config_entries.async_forward_entry_setups(entry, DATA_PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     return True
 
@@ -117,11 +126,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     data = hass.data[DOMAIN].get(entry.entry_id)
 
-    # tryb data — brak platform/feedera/webhooka, tylko sender
+    # tryb data — sender (direct) + sensory podglądu (DATA_PLATFORMS)
     if data and data.get("mode") == MODE_DATA:
         data["direct"].stop()
-        hass.data[DOMAIN].pop(entry.entry_id, None)
-        return True
+        ok = await hass.config_entries.async_unload_platforms(entry, DATA_PLATFORMS)
+        if ok:
+            hass.data[DOMAIN].pop(entry.entry_id, None)
+        return ok
 
     if data:
         data["feeder"].stop()

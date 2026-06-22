@@ -18,15 +18,22 @@ CONF_LABEL = "label"
 CONF_LAT = "lat"
 CONF_LON = "lon"
 BE_INGEST_URL = "https://api.sensmos.com/v1/ingest"
+BE_GET_URL = "https://api.sensmos.com/v1/ingest/get/"  # + device_id
 DATA_MIN_KEY_LEN = 32
 DATA_DEFAULT_INTERVAL = 60
 DATA_MIN_INTERVAL = 20
+
+# tryb data — podgląd (GET) opublikowanych encji innych nodów (realtime zostaje na nodzie)
+GET_DEFAULT_INTERVAL = 600   # 10 min — to tylko podgląd
+GET_MIN_INTERVAL = 120       # min 2 min
 
 # entry.options
 OPT_FEEDS = "feeds"              # [{node_entity, ha_entity, unit}]   (tryb node)
 OPT_WEBHOOK = "webhook_enabled"  # bool                              (tryb node)
 OPT_MAPPINGS = "mappings"        # [{ha_entity, entity}]             (tryb data)
 OPT_PUSH_INTERVAL = "push_interval"  # sekundy                       (tryb data)
+OPT_GETS = "gets"               # [{device_id, prefix}]             (tryb data — podgląd)
+OPT_GET_INTERVAL = "get_interval"  # sekundy                        (tryb data)
 
 # coordinator
 SCAN_INTERVAL_S = 30        # /data/status
@@ -43,3 +50,4 @@ EVENT_NODE = "sensmos_event"
 EVENT_MESSAGE = "sensmos_message"
 
 PLATFORMS = ["sensor", "binary_sensor"]
+DATA_PLATFORMS = ["sensor"]   # tryb data: tylko sensory (podgląd GET)

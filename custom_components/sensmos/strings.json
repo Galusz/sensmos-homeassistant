@@ -49,7 +49,9 @@
           "settings": "⚙️ Settings (node events)",
           "data_add": "➕ Publish a Home Assistant sensor",
           "data_remove": "➖ Remove a published sensor",
-          "data_settings": "⚙️ Settings (interval, location, label)"
+          "get_add": "👁️ Preview another node's data (read into HA)",
+          "get_remove": "➖ Stop previewing a node",
+          "data_settings": "⚙️ Settings (intervals, location, label)"
         }
       },
       "feed_pub": {
@@ -105,11 +107,24 @@
         "title": "Remove published sensors",
         "data": { "remove": "Sensors to stop publishing" }
       },
+      "get_add": {
+        "title": "Preview another node",
+        "description": "Read a node's published data into HA as sensors (any node — real or software). This is a preview, not realtime — it polls on a long interval (default 10 min). The node's full device ID is on the map (node popup → copy).",
+        "data": {
+          "device_id": "Node device ID (64 hex chars)",
+          "prefix": "Local prefix (e.g. neighbor → neighbor.*)"
+        }
+      },
+      "get_remove": {
+        "title": "Stop previewing",
+        "data": { "remove": "Nodes to stop previewing" }
+      },
       "data_settings": {
         "title": "Data settings",
         "description": "Location is optional — without it the server uses GeoIP from your IP.",
         "data": {
           "push_interval": "Push interval (seconds, min 20)",
+          "get_interval": "Preview poll interval (seconds, min 120)",
           "label": "Map label",
           "lat": "Latitude",
           "lon": "Longitude"
@@ -120,12 +135,14 @@
       "invalid_name": "Invalid name — use letters, digits, underscore.",
       "already_mapped": "This entity is already mapped.",
       "target_unavailable": "Could not fetch the target node's catalog.",
-      "invalid_entity": "Use pub.<name> or own.<name> (lowercase, e.g. pub.batt_soc)."
+      "invalid_entity": "Use pub.<name> or own.<name> (lowercase, e.g. pub.batt_soc).",
+      "invalid_device_id": "A device ID is 64 hex characters. Copy it from the node popup on the map."
     },
     "abort": {
       "cannot_connect": "Cannot reach the node.",
       "no_native_left": "All native entities are already mapped.",
       "no_feeds": "Nothing mapped yet.",
+      "no_gets": "No nodes are being previewed yet.",
       "subscribe_ok": "✅ Subscribed! New sensors will appear shortly.",
       "subscribe_failed": "Subscription failed.",
       "insufficient_balance": "Not enough GALU for the first day of the subscription."

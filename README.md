@@ -33,7 +33,9 @@ No Sensmos hardware needed. After adding the integration in **Data only** mode, 
 
 - **➕ Publish a Home Assistant sensor** — pick an HA sensor + the Sensmos entity name. Use `pub.<native>` for a categorized + heatmap entity (e.g. `pub.pm25`, `pub.temp_out`, `pub.batt_soc`) or `own.<anything>` for custom data.
 - **➖ Remove a published sensor**.
-- **⚙️ Settings** — push interval (min 20 s), map label, optional lat/lon (GeoIP if empty).
+- **👁️ Preview another node's data** — read any node's published data (real or software) into HA as sensors. Enter its device ID (copy it from the node popup on the map) and a local prefix; you get `prefix.*` sensors. This is a **preview, not realtime** — it polls on a long interval (default 10 min). No GALU, no subscription — it just reads public map data.
+- **➖ Stop previewing a node**.
+- **⚙️ Settings** — push interval (min 20 s), preview poll interval (min 2 min), map label, optional lat/lon (GeoIP if empty).
 
 Your sensors show up on the [live map](https://sensmos.com/map/) as a purple software node. Numeric sensors send value+unit; binary sensors send `1`/`0`. Up to 50 entities. Native entity names: see the full list in the [ESPHome component README](https://github.com/Galusz/sensmos-esphome#entity-names).
 

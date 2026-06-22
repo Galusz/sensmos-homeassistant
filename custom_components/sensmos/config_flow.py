@@ -5,6 +5,7 @@ import hashlib
 import re
 from typing import Any
 
+import aiohttp
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
@@ -14,6 +15,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import SensmosApi, SensmosApiError, SensmosAuthError
 from .const import (
+    BE_GET_URL,
     CONF_HOST,
     CONF_KEY,
     CONF_LABEL,
@@ -25,9 +27,13 @@ from .const import (
     DATA_MIN_INTERVAL,
     DATA_MIN_KEY_LEN,
     DOMAIN,
+    GET_DEFAULT_INTERVAL,
+    GET_MIN_INTERVAL,
     MODE_DATA,
     MODE_NODE,
     OPT_FEEDS,
+    OPT_GET_INTERVAL,
+    OPT_GETS,
     OPT_MAPPINGS,
     OPT_PUSH_INTERVAL,
     OPT_WEBHOOK,
@@ -193,7 +199,13 @@ class SensmosOptionsFlow(OptionsFlow):
         if self._entry.data.get(CONF_MODE) == MODE_DATA:
             return self.async_show_menu(
                 step_id="init",
-                menu_options=["data_add", "data_remove", "data_settings"],
+                menu_options=[
+                    "data_add",
+                    "data_remove",
+                    "get_add",
+                    "get_remove",
+                    "data_settings",
+                ],
             )
         return self.async_show_menu(
             step_id="init",
@@ -268,10 +280,89 @@ class SensmosOptionsFlow(OptionsFlow):
             ),
         )
 
+    # ── tryb data: podgląd (GET) innych nodów ─────────────────
+
+    async def async_step_get_add(self, user_input=None) -> Any:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            did = user_input["device_id"].strip().lower()
+            prefix = _slugify(user_input.get("prefix") or "node") or "node"
+            if not re.fullmatch(r"[0-9a-f]{64}", did):
+                errors["device_id"] = "invalid_device_id"
+            else:
+                session = async_get_clientsession(self.hass)
+                ok = False
+                try:
+                    async with session.get(
+                        BE_GET_URL + did, timeout=aiohttp.ClientTimeout(total=10)
+                    ) as resp:
+                        ok = resp.status == 200
+                except (aiohttp.ClientError, TimeoutError):
+                    ok = False
+                if not ok:
+                    errors["base"] = "target_unavailable"
+                else:
+                    gets = [
+                        g
+                        for g in self._entry.options.get(OPT_GETS, [])
+                        if g["device_id"] != did
+                    ]
+                    gets.append({"device_id": did, "prefix": prefix})
+                    return self.async_create_entry(
+                        data={**self._entry.options, OPT_GETS: gets}
+                    )
+
+        return self.async_show_form(
+            step_id="get_add",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("device_id"): selector.TextSelector(),
+                    vol.Required("prefix", default="node"): selector.TextSelector(),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_get_remove(self, user_input=None) -> Any:
+        gets = list(self._entry.options.get(OPT_GETS, []))
+        if not gets:
+            return self.async_abort(reason="no_gets")
+        if user_input is not None:
+            rm = set(user_input["remove"])
+            keep = [g for g in gets if g["device_id"] not in rm]
+            return self.async_create_entry(
+                data={**self._entry.options, OPT_GETS: keep}
+            )
+        options = [
+            selector.SelectOptionDict(
+                value=g["device_id"],
+                label=f"{g.get('prefix', 'node')}  ←  {g['device_id'][:12]}…",
+            )
+            for g in gets
+        ]
+        return self.async_show_form(
+            step_id="get_remove",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("remove"): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=options,
+                            multiple=True,
+                            mode=selector.SelectSelectorMode.LIST,
+                        )
+                    )
+                }
+            ),
+        )
+
     async def async_step_data_settings(self, user_input=None) -> Any:
         o = self._entry.options
         if user_input is not None:
-            changes = {**o, OPT_PUSH_INTERVAL: int(user_input[OPT_PUSH_INTERVAL])}
+            changes = {
+                **o,
+                OPT_PUSH_INTERVAL: int(user_input[OPT_PUSH_INTERVAL]),
+                OPT_GET_INTERVAL: int(user_input[OPT_GET_INTERVAL]),
+            }
             label = (user_input.get(CONF_LABEL) or "").strip()
             changes[CONF_LABEL] = label if label else None
             lat, lon = user_input.get(CONF_LAT), user_input.get(CONF_LON)
@@ -292,6 +383,15 @@ class SensmosOptionsFlow(OptionsFlow):
                     ): selector.NumberSelector(
                         selector.NumberSelectorConfig(
                             min=DATA_MIN_INTERVAL, max=3600, step=1,
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
+                    vol.Required(
+                        OPT_GET_INTERVAL,
+                        default=o.get(OPT_GET_INTERVAL, GET_DEFAULT_INTERVAL),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=GET_MIN_INTERVAL, max=3600, step=1,
                             mode=selector.NumberSelectorMode.BOX,
                         )
                     ),

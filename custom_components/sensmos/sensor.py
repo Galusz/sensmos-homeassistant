@@ -14,14 +14,21 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, OPT_FEEDS, POOL_EXCLUDED_PREFIXES
+from .const import DOMAIN, MODE_DATA, OPT_FEEDS, POOL_EXCLUDED_PREFIXES
 from .coordinator import SensmosCoordinator
+from .get import SensmosGet
 
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     data = hass.data[DOMAIN][entry.entry_id]
+
+    # tryb data: sensory to podgląd (GET) opublikowanych encji innych nodów
+    if data.get("mode") == MODE_DATA:
+        await _setup_get_sensors(hass, entry, async_add_entities, data)
+        return
+
     coordinator: SensmosCoordinator = data["coordinator"]
     device_info: DeviceInfo = data["device_info"]
 
@@ -57,6 +64,89 @@ async def async_setup_entry(
     async_add_entities(entities)
     _discover()
     entry.async_on_unload(coordinator.async_add_listener(_discover))
+
+
+async def _setup_get_sensors(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+    data: dict[str, Any],
+) -> None:
+    coordinator: SensmosGet | None = data.get("get")
+    if coordinator is None:
+        return
+
+    known: set[str] = set()
+
+    @callback
+    def _discover() -> None:
+        new: list[SensorEntity] = []
+        for key, ent in (coordinator.data or {}).items():
+            if key in known:
+                continue
+            known.add(key)
+            new.append(
+                GetSensor(
+                    coordinator, entry, ent["device_id"], ent["prefix"], ent["entity_id"]
+                )
+            )
+        if new:
+            async_add_entities(new)
+
+    _discover()
+    entry.async_on_unload(coordinator.async_add_listener(_discover))
+
+
+class GetSensor(CoordinatorEntity[SensmosGet], SensorEntity):
+    """Podgląd encji innego noda (GET). Realtime zostaje na nodzie — to tylko snapshot."""
+
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: SensmosGet,
+        entry: ConfigEntry,
+        device_id: str,
+        prefix: str,
+        entity_id: str,
+    ) -> None:
+        super().__init__(coordinator)
+        self._key = f"{device_id}:{entity_id}"
+        self._attr_unique_id = f"{entry.entry_id}_get_{device_id[:12]}_{entity_id}"
+        self._attr_name = f"{prefix}.{entity_id}"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, f"{entry.entry_id}:get:{device_id}")},
+            name=f"Sensmos {prefix} ({device_id[:8]})",
+            manufacturer="Sensmos",
+            model="Remote node (preview)",
+            configuration_url=f"https://sensmos.com/map/?node={device_id}",
+        )
+
+    def _ent(self) -> dict[str, Any] | None:
+        return (self.coordinator.data or {}).get(self._key)
+
+    @property
+    def available(self) -> bool:
+        ent = self._ent()
+        return super().available and ent is not None and ent.get("online", True)
+
+    @property
+    def native_value(self) -> Any:
+        ent = self._ent()
+        if ent is None:
+            return None
+        val = ent.get("value")
+        try:
+            f = float(val)
+            return int(f) if f == int(f) else round(f, 4)
+        except (TypeError, ValueError):
+            self._attr_state_class = None
+            return val
+
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        return (self._ent() or {}).get("unit") or None
 
 
 class _Base(CoordinatorEntity[SensmosCoordinator], SensorEntity):
