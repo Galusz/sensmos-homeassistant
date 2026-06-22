@@ -1,7 +1,7 @@
 {
   "domain": "sensmos",
   "name": "Sensmos",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "documentation": "https://sensmos.com",
   "issue_tracker": "https://sensmos.com",
   "codeowners": ["@sensmos"],

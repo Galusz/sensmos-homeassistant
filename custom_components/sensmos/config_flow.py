@@ -1,6 +1,7 @@
 """Sensmos — config flow + options flow (mapowania, subskrypcje)."""
 from __future__ import annotations
 
+import hashlib
 import re
 from typing import Any
 
@@ -12,8 +13,28 @@ from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import SensmosApi, SensmosApiError, SensmosAuthError
-from .const import CONF_HOST, CONF_PIN, DOMAIN, OPT_FEEDS, OPT_WEBHOOK
+from .const import (
+    CONF_HOST,
+    CONF_KEY,
+    CONF_LABEL,
+    CONF_LAT,
+    CONF_LON,
+    CONF_MODE,
+    CONF_PIN,
+    DATA_DEFAULT_INTERVAL,
+    DATA_MIN_INTERVAL,
+    DATA_MIN_KEY_LEN,
+    DOMAIN,
+    MODE_DATA,
+    MODE_NODE,
+    OPT_FEEDS,
+    OPT_MAPPINGS,
+    OPT_PUSH_INTERVAL,
+    OPT_WEBHOOK,
+)
 from .units import device_classes_for_unit
+
+_ENTITY_RE = re.compile(r"^(pub|own)\.[a-z0-9_]+$")
 
 _SLUG = re.compile(r"[^a-z0-9_]+")
 
@@ -27,7 +48,11 @@ class SensmosConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(
+    async def async_step_user(self, user_input=None) -> Any:
+        # Wybór drogi: fizyczny node (host+PIN) albo same dane (passkey → mapa).
+        return self.async_show_menu(step_id="user", menu_options=["node", "data"])
+
+    async def async_step_node(
         self, user_input: dict[str, Any] | None = None
     ) -> Any:
         errors: dict[str, str] = {}
@@ -51,7 +76,7 @@ class SensmosConfigFlow(ConfigFlow, domain=DOMAIN):
                     title = info.get("city") or f"Node {device_id[:8]}"
                     return self.async_create_entry(
                         title=f"Sensmos {title}",
-                        data={CONF_HOST: host, CONF_PIN: pin},
+                        data={CONF_MODE: MODE_NODE, CONF_HOST: host, CONF_PIN: pin},
                         options={OPT_FEEDS: [], OPT_WEBHOOK: True},
                     )
             except SensmosAuthError:
@@ -60,13 +85,70 @@ class SensmosConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
 
         return self.async_show_form(
-            step_id="user",
+            step_id="node",
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_HOST): selector.TextSelector(),
                     vol.Required(CONF_PIN): selector.TextSelector(
                         selector.TextSelectorConfig(
                             type=selector.TextSelectorType.PASSWORD
+                        )
+                    ),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_data(self, user_input=None) -> Any:
+        """Tryb 'data' — bez sprzętu: passkey + (opcjonalnie) lokalizacja/etykieta."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            key = user_input[CONF_KEY].strip()
+            if len(key) < DATA_MIN_KEY_LEN:
+                errors[CONF_KEY] = "key_too_short"
+            else:
+                device_id = hashlib.sha256(
+                    ("sensmos-soft:" + key).encode()
+                ).hexdigest()
+                await self.async_set_unique_id(device_id)
+                self._abort_if_unique_id_configured()
+                label = (user_input.get(CONF_LABEL) or "").strip()
+                opts: dict[str, Any] = {
+                    OPT_MAPPINGS: [],
+                    OPT_PUSH_INTERVAL: DATA_DEFAULT_INTERVAL,
+                }
+                if label:
+                    opts[CONF_LABEL] = label
+                lat, lon = user_input.get(CONF_LAT), user_input.get(CONF_LON)
+                if lat is not None and lon is not None:
+                    opts[CONF_LAT] = lat
+                    opts[CONF_LON] = lon
+                return self.async_create_entry(
+                    title=f"Sensmos {label or 'data'}",
+                    data={CONF_MODE: MODE_DATA, CONF_KEY: key},
+                    options=opts,
+                )
+
+        return self.async_show_form(
+            step_id="data",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_KEY): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.PASSWORD
+                        )
+                    ),
+                    vol.Optional(CONF_LABEL): selector.TextSelector(),
+                    vol.Optional(CONF_LAT): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=-90, max=90, step=0.0001,
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
+                    vol.Optional(CONF_LON): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=-180, max=180, step=0.0001,
+                            mode=selector.NumberSelectorMode.BOX,
                         )
                     ),
                 }
@@ -108,9 +190,132 @@ class SensmosOptionsFlow(OptionsFlow):
     # ── menu ──────────────────────────────────────────────────
 
     async def async_step_init(self, user_input=None) -> Any:
+        if self._entry.data.get(CONF_MODE) == MODE_DATA:
+            return self.async_show_menu(
+                step_id="init",
+                menu_options=["data_add", "data_remove", "data_settings"],
+            )
         return self.async_show_menu(
             step_id="init",
             menu_options=["feed_pub", "feed_own", "feed_remove", "subscribe", "settings"],
+        )
+
+    # ── tryb data: mapowania encja HA → encja Sensmos ─────────
+
+    async def async_step_data_add(self, user_input=None) -> Any:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            entity = user_input["entity"].strip().lower()
+            if not _ENTITY_RE.match(entity):
+                errors["entity"] = "invalid_entity"
+            else:
+                maps = list(self._entry.options.get(OPT_MAPPINGS, []))
+                maps = [
+                    m for m in maps
+                    if not (m["ha_entity"] == user_input["ha_entity"] and m["entity"] == entity)
+                ]
+                maps.append({"ha_entity": user_input["ha_entity"], "entity": entity})
+                return self.async_create_entry(
+                    data={**self._entry.options, OPT_MAPPINGS: maps}
+                )
+
+        return self.async_show_form(
+            step_id="data_add",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("ha_entity"): selector.EntitySelector(
+                        selector.EntitySelectorConfig(
+                            filter=selector.EntityFilterSelectorConfig(
+                                domain=["sensor", "binary_sensor"]
+                            )
+                        )
+                    ),
+                    vol.Required("entity"): selector.TextSelector(),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_data_remove(self, user_input=None) -> Any:
+        maps = list(self._entry.options.get(OPT_MAPPINGS, []))
+        if not maps:
+            return self.async_abort(reason="no_feeds")
+        if user_input is not None:
+            rm = set(user_input["remove"])
+            keep = [m for m in maps if f"{m['ha_entity']}|{m['entity']}" not in rm]
+            return self.async_create_entry(
+                data={**self._entry.options, OPT_MAPPINGS: keep}
+            )
+        options = [
+            selector.SelectOptionDict(
+                value=f"{m['ha_entity']}|{m['entity']}",
+                label=f"{m['entity']}  ←  {m['ha_entity']}",
+            )
+            for m in maps
+        ]
+        return self.async_show_form(
+            step_id="data_remove",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("remove"): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=options,
+                            multiple=True,
+                            mode=selector.SelectSelectorMode.LIST,
+                        )
+                    )
+                }
+            ),
+        )
+
+    async def async_step_data_settings(self, user_input=None) -> Any:
+        o = self._entry.options
+        if user_input is not None:
+            changes = {**o, OPT_PUSH_INTERVAL: int(user_input[OPT_PUSH_INTERVAL])}
+            label = (user_input.get(CONF_LABEL) or "").strip()
+            changes[CONF_LABEL] = label if label else None
+            lat, lon = user_input.get(CONF_LAT), user_input.get(CONF_LON)
+            if lat is not None and lon is not None:
+                changes[CONF_LAT], changes[CONF_LON] = lat, lon
+            else:
+                changes.pop(CONF_LAT, None)
+                changes.pop(CONF_LON, None)
+            return self.async_create_entry(data=changes)
+
+        return self.async_show_form(
+            step_id="data_settings",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        OPT_PUSH_INTERVAL,
+                        default=o.get(OPT_PUSH_INTERVAL, DATA_DEFAULT_INTERVAL),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=DATA_MIN_INTERVAL, max=3600, step=1,
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
+                    vol.Optional(
+                        CONF_LABEL, description={"suggested_value": o.get(CONF_LABEL)}
+                    ): selector.TextSelector(),
+                    vol.Optional(
+                        CONF_LAT, description={"suggested_value": o.get(CONF_LAT)}
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=-90, max=90, step=0.0001,
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
+                    vol.Optional(
+                        CONF_LON, description={"suggested_value": o.get(CONF_LON)}
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=-180, max=180, step=0.0001,
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
+                }
+            ),
         )
 
     # ── karmienie: encja natywna (pub.*) ──────────────────────

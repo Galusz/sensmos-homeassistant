@@ -1,6 +1,7 @@
 """Sensmos — integracja noda ESP32 z Home Assistant."""
 from __future__ import annotations
 
+import hashlib
 import logging
 
 import voluptuous as vol
@@ -15,13 +16,17 @@ from homeassistant.helpers.entity import DeviceInfo
 from .api import SensmosApi, SensmosApiError, SensmosAuthError
 from .const import (
     CONF_HOST,
+    CONF_KEY,
+    CONF_MODE,
     CONF_PIN,
     DOMAIN,
+    MODE_DATA,
     OPT_FEEDS,
     OPT_WEBHOOK,
     PLATFORMS,
 )
 from .coordinator import SensmosCoordinator
+from .direct import SensmosDirect
 from .feeder import Feeder
 from .webhook import async_remove_node_webhook, async_setup_node_webhook
 
@@ -37,7 +42,26 @@ SERVICE_PUSH_SCHEMA = vol.Schema(
 )
 
 
+async def _async_setup_data_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Tryb 'data' — bez fizycznego noda; wysyłka encji HA na żywą mapę."""
+    direct = SensmosDirect(hass, entry)
+    await direct.async_start()
+    device_id = hashlib.sha256(
+        ("sensmos-soft:" + entry.data[CONF_KEY]).encode()
+    ).hexdigest()
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
+        "direct": direct,
+        "device_id": device_id,
+        "mode": MODE_DATA,
+    }
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    if entry.data.get(CONF_MODE) == MODE_DATA:
+        return await _async_setup_data_entry(hass, entry)
+
     api = SensmosApi(
         async_get_clientsession(hass), entry.data[CONF_HOST], entry.data[CONF_PIN]
     )
@@ -92,6 +116,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     data = hass.data[DOMAIN].get(entry.entry_id)
+
+    # tryb data — brak platform/feedera/webhooka, tylko sender
+    if data and data.get("mode") == MODE_DATA:
+        data["direct"].stop()
+        hass.data[DOMAIN].pop(entry.entry_id, None)
+        return True
+
     if data:
         data["feeder"].stop()
         await async_remove_node_webhook(

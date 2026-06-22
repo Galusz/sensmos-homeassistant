@@ -2,9 +2,12 @@
 
 # Sensmos — Home Assistant integration (HACS)
 
-Connect a Sensmos ESP32 node to Home Assistant — **locally, no cloud, no broker**. The integration talks to the node's HTTP API on your LAN.
+Bring Sensmos into Home Assistant — two ways:
 
-> Sensmos is a DePIN sensor network: nodes publish data, earn GALU, and can subscribe to each other. This integration brings that into Home Assistant both ways — read node data in HA, and feed HA data to the node.
+- **🔌 Physical node** — connect a Sensmos ESP32 node on your LAN (HTTP API, **no cloud, no broker**): read its data in HA and feed HA data back to it.
+- **🟣 Data only** — no hardware: push selected Home Assistant sensors straight to the [live map](https://sensmos.com/map/) as a software node (purple). Pick a passkey, choose entities, done.
+
+> Sensmos is a DePIN sensor network: nodes publish data to a live map, earn GALU, and can subscribe to each other.
 
 ## Features
 
@@ -20,9 +23,23 @@ Connect a Sensmos ESP32 node to Home Assistant — **locally, no cloud, no broke
 1. HACS → Integrations → ⋮ → **Custom repositories** → add this repo (category *Integration*).
 2. Install **Sensmos**, then restart Home Assistant.
 3. Settings → Devices & Services → **Add Integration** → **Sensmos**.
-4. Enter the **node address** (the IP shown in the Sensmos app, or `sensmos-xxxxxx.local`) and the **PIN**.
+4. Pick a mode:
+   - **🔌 Physical node** — enter the **node address** (IP from the Sensmos app, or `sensmos-xxxxxx.local`) and the **PIN**.
+   - **🟣 Data only** — enter a **passkey** (≥32 chars; this is your node's identity), optionally a label and lat/lon. Then open **Configure** to choose which HA sensors to publish.
 
-The device and its sensors appear immediately.
+## Data-only mode (push HA sensors to the map)
+
+No Sensmos hardware needed. After adding the integration in **Data only** mode, open **Configure**:
+
+- **➕ Publish a Home Assistant sensor** — pick an HA sensor + the Sensmos entity name. Use `pub.<native>` for a categorized + heatmap entity (e.g. `pub.pm25`, `pub.temp_out`, `pub.batt_soc`) or `own.<anything>` for custom data.
+- **➖ Remove a published sensor**.
+- **⚙️ Settings** — push interval (min 20 s), map label, optional lat/lon (GeoIP if empty).
+
+Your sensors show up on the [live map](https://sensmos.com/map/) as a purple software node. Numeric sensors send value+unit; binary sensors send `1`/`0`. Up to 50 entities. Native entity names: see the full list in the [ESPHome component README](https://github.com/Galusz/sensmos-esphome#entity-names).
+
+---
+
+The sections below are for the **🔌 physical node** mode.
 
 ## Feeding the node (entity mapping)
 

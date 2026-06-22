@@ -5,9 +5,28 @@ DOMAIN = "sensmos"
 CONF_HOST = "host"
 CONF_PIN = "pin"
 
+# Dwa tryby integracji:
+#   node — fizyczny node Sensmos (host + PIN), dwukierunkowo (jak dotąd)
+#   data — bez sprzętu: wybrane encje HA lecą wprost na żywą mapę (programowy node)
+CONF_MODE = "mode"
+MODE_NODE = "node"
+MODE_DATA = "data"
+
+# tryb data
+CONF_KEY = "key"        # passkey ≥32 znaki → device_id = sha256("sensmos-soft:"+key)
+CONF_LABEL = "label"
+CONF_LAT = "lat"
+CONF_LON = "lon"
+BE_INGEST_URL = "https://api.sensmos.com/v1/ingest"
+DATA_MIN_KEY_LEN = 32
+DATA_DEFAULT_INTERVAL = 60
+DATA_MIN_INTERVAL = 20
+
 # entry.options
-OPT_FEEDS = "feeds"              # [{node_entity, ha_entity, unit}]
-OPT_WEBHOOK = "webhook_enabled"  # bool
+OPT_FEEDS = "feeds"              # [{node_entity, ha_entity, unit}]   (tryb node)
+OPT_WEBHOOK = "webhook_enabled"  # bool                              (tryb node)
+OPT_MAPPINGS = "mappings"        # [{ha_entity, entity}]             (tryb data)
+OPT_PUSH_INTERVAL = "push_interval"  # sekundy                       (tryb data)
 
 # coordinator
 SCAN_INTERVAL_S = 30        # /data/status

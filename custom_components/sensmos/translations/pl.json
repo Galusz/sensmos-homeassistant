@@ -2,17 +2,36 @@
   "config": {
     "step": {
       "user": {
+        "title": "Dodaj Sensmos",
+        "description": "Wybierz sposób połączenia:",
+        "menu_options": {
+          "node": "🔌 Fizyczny node (urządzenie Sensmos w Twojej sieci)",
+          "data": "🟣 Same dane (wyślij encje HA na mapę — bez sprzętu)"
+        }
+      },
+      "node": {
         "title": "Dodaj node Sensmos",
-        "description": "Podaj adres noda i PIN. Adres znajdziesz w aplikacji Sensmos (np. 192.168.68.71 albo sensmos-ab12cd.local).",
+        "description": "Podaj adres i PIN noda. Adres widać w aplikacji Sensmos (np. 192.168.68.71 albo sensmos-ab12cd.local).",
         "data": {
           "host": "Adres noda (IP lub hostname)",
           "pin": "PIN noda"
+        }
+      },
+      "data": {
+        "title": "Same dane — wysyłka na mapę",
+        "description": "Wybrane encje Home Assistant pojawią się na żywej mapie jako programowy node (fioletowy). Bez sprzętu, bez portfela. Po dodaniu wybierz które encje publikować w opcjach integracji.",
+        "data": {
+          "key": "Passkey (min 32 znaki) — to tożsamość Twojego noda, trzymaj w sekrecie",
+          "label": "Etykieta na mapie (opcjonalnie)",
+          "lat": "Szerokość (opcjonalnie — bez tego GeoIP)",
+          "lon": "Długość (opcjonalnie)"
         }
       }
     },
     "error": {
       "invalid_pin": "Błędny PIN.",
-      "cannot_connect": "Brak połączenia z nodem. Sprawdź adres i czy node jest online."
+      "cannot_connect": "Nie można połączyć z nodem. Sprawdź adres i czy node jest online.",
+      "key_too_short": "Passkey musi mieć co najmniej 32 znaki."
     },
     "abort": {
       "already_configured": "Ten node jest już skonfigurowany."
@@ -21,35 +40,38 @@
   "options": {
     "step": {
       "init": {
-        "title": "Node Sensmos",
+        "title": "Sensmos",
         "menu_options": {
           "feed_pub": "➕ Karm encję natywną (pub.*) z HA",
           "feed_own": "➕ Karm własną encję (own.*) z HA",
-          "feed_remove": "➖ Usuń mapowanie",
+          "feed_remove": "➖ Usuń mapowanie karmienia",
           "subscribe": "📡 Subskrybuj inny node",
-          "settings": "⚙️ Ustawienia (zdarzenia noda)"
+          "settings": "⚙️ Ustawienia (zdarzenia noda)",
+          "data_add": "➕ Publikuj encję Home Assistant",
+          "data_remove": "➖ Usuń publikowaną encję",
+          "data_settings": "⚙️ Ustawienia (interwał, lokalizacja, etykieta)"
         }
       },
       "feed_pub": {
-        "title": "Wybierz encję natywną noda",
-        "description": "To encje nagradzane przez sieć. Wybierz jedną — w następnym kroku wskażesz pasujący sensor z Home Assistant.",
+        "title": "Wybierz natywną encję noda",
+        "description": "To encje nagradzane przez sieć. Wybierz jedną — w kolejnym kroku wskażesz pasujący sensor Home Assistant.",
         "data": { "node_entity": "Encja natywna (jednostka)" }
       },
       "feed_pub_entity": {
         "title": "Wybierz sensor Home Assistant",
-        "description": "Karmisz **{node_entity}** (jednostka: {unit}). Lista jest zawężona do zgodnych sensorów; jednostki są przeliczane automatycznie (np. kW → W).",
+        "description": "Karmienie **{node_entity}** (jednostka: {unit}). Lista przefiltrowana do zgodnych sensorów; jednostki przeliczane automatycznie (np. kW → W).",
         "data": { "ha_entity": "Sensor Home Assistant" }
       },
       "feed_own": {
         "title": "Karm własną encję",
-        "description": "Dowolny sensor lub binary_sensor z HA może trafiać na node jako encja own.* do użycia w skryptach noda. Jednostka jest brana z encji HA automatycznie; sensory binarne (np. ruch) stają się 1/0.",
+        "description": "Dowolny sensor lub binary_sensor HA może być zapisany na nodzie jako encja own.* do użycia w skryptach noda. Jednostka brana z encji HA; binary sensory (np. ruch) stają się 1/0.",
         "data": {
           "name": "Nazwa na nodzie (np. boiler → own.boiler)",
-          "ha_entity": "Sensor lub binary_sensor z Home Assistant"
+          "ha_entity": "Sensor lub binary_sensor HA"
         }
       },
       "feed_remove": {
-        "title": "Usuń mapowania",
+        "title": "Usuń mapowania karmienia",
         "data": { "remove": "Mapowania do usunięcia" }
       },
       "subscribe": {
@@ -57,7 +79,7 @@
         "description": "Twój node będzie odbierał dane innego noda (rozliczane dziennie w GALU). Przed potwierdzeniem zobaczysz, co jest dostępne.",
         "data": {
           "esp_id": "Device ID noda docelowego",
-          "prefix": "Lokalny prefix (np. sub → sub.*)",
+          "prefix": "Lokalny prefiks (np. sub → sub.*)",
           "days": "Dni"
         }
       },
@@ -70,19 +92,42 @@
         "data": {
           "webhook_enabled": "Zdarzenia noda w HA (sensmos_event / sensmos_message)"
         }
+      },
+      "data_add": {
+        "title": "Publikuj sensor Home Assistant",
+        "description": "Wybierz sensor HA i nazwę encji Sensmos. Użyj **pub.<native>** dla nazwy z listy natywnej (kategoria + heatmapa) albo **own.<cokolwiek>** dla danych własnych. Przykłady: pub.batt_soc, pub.pm25, own.boiler_temp.",
+        "data": {
+          "ha_entity": "Sensor lub binary_sensor HA",
+          "entity": "Encja Sensmos (pub.* lub own.*)"
+        }
+      },
+      "data_remove": {
+        "title": "Usuń publikowane encje",
+        "data": { "remove": "Encje do przestania publikowania" }
+      },
+      "data_settings": {
+        "title": "Ustawienia danych",
+        "description": "Lokalizacja jest opcjonalna — bez niej serwer użyje GeoIP z Twojego IP.",
+        "data": {
+          "push_interval": "Interwał wysyłki (sekundy, min 20)",
+          "label": "Etykieta na mapie",
+          "lat": "Szerokość",
+          "lon": "Długość"
+        }
       }
     },
     "error": {
-      "invalid_name": "Nieprawidłowa nazwa — użyj liter, cyfr, podkreślnika.",
+      "invalid_name": "Błędna nazwa — użyj liter, cyfr, podkreślnika.",
       "already_mapped": "Ta encja jest już zmapowana.",
-      "target_unavailable": "Nie udało się pobrać katalogu noda docelowego."
+      "target_unavailable": "Nie udało się pobrać katalogu noda docelowego.",
+      "invalid_entity": "Użyj pub.<nazwa> lub own.<nazwa> (małe litery, np. pub.batt_soc)."
     },
     "abort": {
-      "cannot_connect": "Brak połączenia z nodem.",
+      "cannot_connect": "Nie można połączyć z nodem.",
       "no_native_left": "Wszystkie encje natywne są już zmapowane.",
-      "no_feeds": "Brak mapowań.",
-      "subscribe_ok": "✅ Zasubskrybowano! Nowe sensory pojawią się za chwilę.",
-      "subscribe_failed": "Subskrypcja nie powiodła się.",
+      "no_feeds": "Nic jeszcze nie zmapowano.",
+      "subscribe_ok": "✅ Zasubskrybowano! Nowe sensory pojawią się wkrótce.",
+      "subscribe_failed": "Subskrypcja nieudana.",
       "insufficient_balance": "Za mało GALU na pierwszą dobę subskrypcji."
     }
   }

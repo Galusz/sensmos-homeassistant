@@ -2,17 +2,36 @@
   "config": {
     "step": {
       "user": {
+        "title": "Add Sensmos",
+        "description": "Choose how to connect:",
+        "menu_options": {
+          "node": "🔌 Physical node (a Sensmos device on your network)",
+          "data": "🟣 Data only (push HA sensors to the map — no hardware)"
+        }
+      },
+      "node": {
         "title": "Add Sensmos node",
         "description": "Enter your node's address and PIN. The address is shown in the Sensmos app (e.g. 192.168.68.71 or sensmos-ab12cd.local).",
         "data": {
           "host": "Node address (IP or hostname)",
           "pin": "Node PIN"
         }
+      },
+      "data": {
+        "title": "Data only — push to the map",
+        "description": "Selected Home Assistant sensors will show up on the live map as a software node (purple). No hardware, no wallet. After adding, pick which sensors to publish in the integration's options.",
+        "data": {
+          "key": "Passkey (min 32 chars) — this is your node's identity, keep it safe",
+          "label": "Map label (optional)",
+          "lat": "Latitude (optional — GeoIP used if empty)",
+          "lon": "Longitude (optional)"
+        }
       }
     },
     "error": {
       "invalid_pin": "Wrong PIN.",
-      "cannot_connect": "Cannot reach the node. Check the address and that the node is online."
+      "cannot_connect": "Cannot reach the node. Check the address and that the node is online.",
+      "key_too_short": "Passkey must be at least 32 characters."
     },
     "abort": {
       "already_configured": "This node is already configured."
@@ -21,13 +40,16 @@
   "options": {
     "step": {
       "init": {
-        "title": "Sensmos node",
+        "title": "Sensmos",
         "menu_options": {
           "feed_pub": "➕ Feed a native entity (pub.*) from HA",
           "feed_own": "➕ Feed a custom entity (own.*) from HA",
           "feed_remove": "➖ Remove a feed mapping",
           "subscribe": "📡 Subscribe to another node",
-          "settings": "⚙️ Settings (node events)"
+          "settings": "⚙️ Settings (node events)",
+          "data_add": "➕ Publish a Home Assistant sensor",
+          "data_remove": "➖ Remove a published sensor",
+          "data_settings": "⚙️ Settings (interval, location, label)"
         }
       },
       "feed_pub": {
@@ -70,17 +92,40 @@
         "data": {
           "webhook_enabled": "Node events in HA (sensmos_event / sensmos_message)"
         }
+      },
+      "data_add": {
+        "title": "Publish a Home Assistant sensor",
+        "description": "Pick an HA sensor and the Sensmos entity name. Use **pub.<native>** for a name from the native list (categorized + heatmap), or **own.<anything>** for custom data. Examples: pub.batt_soc, pub.pm25, own.boiler_temp.",
+        "data": {
+          "ha_entity": "Home Assistant sensor or binary sensor",
+          "entity": "Sensmos entity (pub.* or own.*)"
+        }
+      },
+      "data_remove": {
+        "title": "Remove published sensors",
+        "data": { "remove": "Sensors to stop publishing" }
+      },
+      "data_settings": {
+        "title": "Data settings",
+        "description": "Location is optional — without it the server uses GeoIP from your IP.",
+        "data": {
+          "push_interval": "Push interval (seconds, min 20)",
+          "label": "Map label",
+          "lat": "Latitude",
+          "lon": "Longitude"
+        }
       }
     },
     "error": {
       "invalid_name": "Invalid name — use letters, digits, underscore.",
       "already_mapped": "This entity is already mapped.",
-      "target_unavailable": "Could not fetch the target node's catalog."
+      "target_unavailable": "Could not fetch the target node's catalog.",
+      "invalid_entity": "Use pub.<name> or own.<name> (lowercase, e.g. pub.batt_soc)."
     },
     "abort": {
       "cannot_connect": "Cannot reach the node.",
       "no_native_left": "All native entities are already mapped.",
-      "no_feeds": "No feed mappings yet.",
+      "no_feeds": "Nothing mapped yet.",
       "subscribe_ok": "✅ Subscribed! New sensors will appear shortly.",
       "subscribe_failed": "Subscription failed.",
       "insufficient_balance": "Not enough GALU for the first day of the subscription."
