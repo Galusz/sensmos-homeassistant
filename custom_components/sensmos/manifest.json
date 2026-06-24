@@ -1,7 +1,7 @@
 {
   "domain": "sensmos",
   "name": "Sensmos",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "documentation": "https://sensmos.com",
   "issue_tracker": "https://github.com/Galusz/sensmos-homeassistant/issues",
   "codeowners": ["@Galusz"],
