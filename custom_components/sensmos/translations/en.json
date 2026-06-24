@@ -97,7 +97,7 @@
       },
       "data_add": {
         "title": "Publish a Home Assistant sensor",
-        "description": "Pick an HA sensor and the Sensmos entity name. Use **pub.<native>** for a name from the native list (categorized + heatmap), or **own.<anything>** for custom data. Examples: pub.batt_soc, pub.pm25, own.boiler_temp.",
+        "description": "Pick an HA sensor and the Sensmos entity name. Use **pub.NATIVE** for a name from the native list (categorized + heatmap), or **own.ANYTHING** for custom data. Examples: pub.batt_soc, pub.pm25, own.boiler_temp.",
         "data": {
           "ha_entity": "Home Assistant sensor or binary sensor",
           "entity": "Sensmos entity (pub.* or own.*)"
@@ -135,7 +135,7 @@
       "invalid_name": "Invalid name — use letters, digits, underscore.",
       "already_mapped": "This entity is already mapped.",
       "target_unavailable": "Could not fetch the target node's catalog.",
-      "invalid_entity": "Use pub.<name> or own.<name> (lowercase, e.g. pub.batt_soc).",
+      "invalid_entity": "Use pub.NAME or own.NAME (lowercase, e.g. pub.batt_soc).",
       "invalid_device_id": "A device ID is 64 hex characters. Copy it from the node popup on the map."
     },
     "abort": {

@@ -97,7 +97,7 @@
       },
       "data_add": {
         "title": "Publikuj sensor Home Assistant",
-        "description": "Wybierz sensor HA i nazwę encji Sensmos. Użyj **pub.<native>** dla nazwy z listy natywnej (kategoria + heatmapa) albo **own.<cokolwiek>** dla danych własnych. Przykłady: pub.batt_soc, pub.pm25, own.boiler_temp.",
+        "description": "Wybierz sensor HA i nazwę encji Sensmos. Użyj **pub.NATIVE** dla nazwy z listy natywnej (kategoria + heatmapa) albo **own.COKOLWIEK** dla danych własnych. Przykłady: pub.batt_soc, pub.pm25, own.boiler_temp.",
         "data": {
           "ha_entity": "Sensor lub binary_sensor HA",
           "entity": "Encja Sensmos (pub.* lub own.*)"
@@ -135,7 +135,7 @@
       "invalid_name": "Błędna nazwa — użyj liter, cyfr, podkreślnika.",
       "already_mapped": "Ta encja jest już zmapowana.",
       "target_unavailable": "Nie udało się pobrać katalogu noda docelowego.",
-      "invalid_entity": "Użyj pub.<nazwa> lub own.<nazwa> (małe litery, np. pub.batt_soc).",
+      "invalid_entity": "Użyj pub.NAZWA lub own.NAZWA (małe litery, np. pub.batt_soc).",
       "invalid_device_id": "Device ID to 64 znaki hex. Skopiuj z popupu noda na mapie."
     },
     "abort": {
